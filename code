@@ -1,0 +1,166 @@
+import tkinter as tk
+from tkinter import ttk, messagebox
+import webbrowser
+from youtube_search import YoutubeSearch
+import json
+
+
+class MusicPlayerGUI:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("🎵 Music Player")
+        self.root.geometry("500x400")
+        self.root.configure(bg='#2b2b2b')
+
+        self.setup_ui()
+
+    def setup_ui(self):
+        # Title
+        title_label = tk.Label(
+            self.root,
+            text="🎵 AI Music Player",
+            font=('Arial', 20, 'bold'),
+            fg='#1DB954',
+            bg='#2b2b2b'
+        )
+        title_label.pack(pady=20)
+
+        # Song Name
+        tk.Label(
+            self.root,
+            text="Song Name:",
+            font=('Arial', 12),
+            fg='white',
+            bg='#2b2b2b'
+        ).pack(pady=5)
+
+        self.song_entry = tk.Entry(
+            self.root,
+            width=40,
+            font=('Arial', 12)
+        )
+        self.song_entry.pack(pady=5)
+
+        # Artist Name
+        tk.Label(
+            self.root,
+            text="Artist Name:",
+            font=('Arial', 12),
+            fg='white',
+            bg='#2b2b2b'
+        ).pack(pady=5)
+
+        self.artist_entry = tk.Entry(
+            self.root,
+            width=40,
+            font=('Arial', 12)
+        )
+        self.artist_entry.pack(pady=5)
+
+        # Search Button
+        search_btn = tk.Button(
+            self.root,
+            text="🔍 Search & Play",
+            command=self.search_music,
+            bg='#1DB954',
+            fg='white',
+            font=('Arial', 14, 'bold'),
+            width=20,
+            height=2
+        )
+        search_btn.pack(pady=20)
+
+        # Result Label
+        self.result_label = tk.Label(
+            self.root,
+            text="",
+            font=('Arial', 10),
+            fg='white',
+            bg='#2b2b2b',
+            wraplength=400
+        )
+        self.result_label.pack(pady=10)
+
+        # Quick Examples Frame
+        examples_frame = tk.Frame(self.root, bg='#2b2b2b')
+        examples_frame.pack(pady=20)
+
+        tk.Label(
+            examples_frame,
+            text="Quick Examples:",
+            font=('Arial', 12, 'bold'),
+            fg='white',
+            bg='#2b2b2b'
+        ).pack()
+
+        examples = [
+            ("Blinding Lights", "The Weeknd"),
+            ("Shape of You", "Ed Sheeran"),
+            ("Bohemian Rhapsody", "Queen")
+        ]
+
+        for song, artist in examples:
+            example_btn = tk.Button(
+                examples_frame,
+                text=f"🎵 {song}",
+                command=lambda s=song, a=artist: self.fill_example(s, a),
+                bg='#444444',
+                fg='white',
+                font=('Arial', 10)
+            )
+            example_btn.pack(side=tk.LEFT, padx=5)
+
+    def fill_example(self, song, artist):
+        self.song_entry.delete(0, tk.END)
+        self.artist_entry.delete(0, tk.END)
+        self.song_entry.insert(0, song)
+        self.artist_entry.insert(0, artist)
+
+    def search_music(self):
+        song_name = self.song_entry.get().strip()
+        artist_name = self.artist_entry.get().strip()
+
+        if not song_name or not artist_name:
+            messagebox.showwarning("Input Error", "Please enter both song name and artist name!")
+            return
+
+        try:
+            self.result_label.config(text=f"🔍 Searching for '{song_name}' by '{artist_name}'...")
+            self.root.update()
+
+            # Search YouTube
+            search_query = f"{song_name} {artist_name} official audio"
+            results = YoutubeSearch(search_query, max_results=1).to_dict()
+
+            if results:
+                video_id = results[0]['id']
+                video_title = results[0]['title']
+                youtube_url = f"https://www.youtube.com/watch?v={video_id}"
+
+                self.result_label.config(
+                    text=f"✅ Found: {video_title}\nClick the link below to play!"
+                )
+
+                # Create clickable link
+                link_label = tk.Label(
+                    self.root,
+                    text="🎬 Open in YouTube",
+                    font=('Arial', 12, 'underline'),
+                    fg='#1DB954',
+                    bg='#2b2b2b',
+                    cursor="hand2"
+                )
+                link_label.pack(pady=5)
+                link_label.bind("<Button-1>", lambda e: webbrowser.open(youtube_url))
+
+            else:
+                self.result_label.config(text="❌ No results found. Try different search terms.")
+
+        except Exception as e:
+            self.result_label.config(text=f"❌ Error: {str(e)}")
+
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = MusicPlayerGUI(root)
+    root.mainloop()
